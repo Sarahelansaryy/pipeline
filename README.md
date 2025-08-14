@@ -10,6 +10,7 @@ This project provisions AWS infrastructure using **Terraform** with a modular se
 ---
 
 ## 📂 Project Structure
+```bash
 project/
 │
 ├── main.tf # Backend config & module calls
@@ -27,7 +28,7 @@ project/
 │ ├── s3_setup/ # Terraform for S3 application buckets
 │ └── sns_topic/ # Terraform for SNS topics
 
-
+```
 ---
 
 ## ⚙️ Prerequisites
@@ -62,10 +63,9 @@ DynamoDB Table → Locks state to prevent concurrent changes
 ### 2️⃣ Initialize Terraform in Root Project
 From the root directory:
 
-bash
-Copy
-Edit
+```bash
 terraform init
+```
 Connects to the remote backend (S3 + DynamoDB)
 
 Downloads all providers & modules
