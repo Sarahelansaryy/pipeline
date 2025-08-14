@@ -1,0 +1,7 @@
+region                     = "eu-central-1"
+lambda_role_name           = "lambda-cloudwatch-sns-role"
+lambda_function_name       = "trigger-function"
+lambda_handler             = "index.handler"
+lambda_runtime             = "nodejs20.x"
+bucket_name                = "my-raw-images-bucket-0123"
+topic_name                 = "my-sns"

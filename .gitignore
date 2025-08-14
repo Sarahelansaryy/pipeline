@@ -1,0 +1,12 @@
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Terraform crash logs
+crash.log
+
+# Node.js dependencies
+node_modules/
+
+# Terraform .terraform directory
+.terraform/
