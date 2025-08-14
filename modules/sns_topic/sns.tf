@@ -31,7 +31,7 @@ resource "aws_sqs_queue_policy" "allow_sns" {
       Resource =  module.sqs.raw_images_queue_arn,
       Condition = {
         ArnEquals = {
-          "aws:SourceArn" = aws_sns_topic.sns_topic_arn
+          "aws:SourceArn" = aws_sns_topic.sns_topic.arn
         }
       }
     }]
