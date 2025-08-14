@@ -13,7 +13,7 @@ This project provisions AWS infrastructure using **Terraform** with a modular se
 ```bash
 project/
 │
-├── main.tf # Backend config & module calls
+├── main.tf # Backend config & module calls & email error alert resoursce
 ├── variables.tf # Input variable definitions
 ├── terraform.tfvars # Variable values
 ├── outputs.tf # Project outputs
@@ -27,6 +27,8 @@ project/
 │ ├── lambda_function/ # Terraform for Lambda deployment
 │ ├── s3_setup/ # Terraform for S3 application buckets
 │ └── sns_topic/ # Terraform for SNS topics
+
+  
 
 ```
 ---

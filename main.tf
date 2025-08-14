@@ -52,3 +52,8 @@ resource "aws_cloudwatch_metric_alarm" "lambda_error_alarm" {
     FunctionName = module.lambda_function.lambda_function_name
   }
 }
+module "sqs" {
+  source = "./modules/sqs"
+  
+}
+
