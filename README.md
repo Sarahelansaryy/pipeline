@@ -29,38 +29,71 @@ This project provisions AWS infrastructure using **Terraform** with a modular se
 
 ## Architecture Flow
 
-```mermaid
-flowchart LR
-    A[S3 Bucket (Upload Image)] -->|Triggers| B[Lambda Function]
-    B -->|Publishes Object Key| C[SNS Topic]
-    C -->|Sends Message| D[SQS Queue]
-    D -->|Triggers| E[EKS Pod]
-    E -->|Uploads Resized Image| F[S3 Bucket (Processed Image)]
+IAM Roles: 
+ [LambdaRole]  - Lambda access to S3 & SNS
+ [EKSRole]     - EKS pods access SQS & S3
+ [SNSRole]     - SNS access to send messages
+ ```bash
 
-
+         +-------------------+
+         | S3 Bucket (Upload)|
+         +---------+---------+
+                   |
+                   |  S3 Event
+                   v
+         +-------------------+
+         | Lambda Function   |
+         |   [LambdaRole]    |
+         +---------+---------+
+                   |
+                   | Publish Object Key
+                   v
+         +-------------------+
+         | SNS Topic         |
+         |   [SNSRole]       |
+         +---------+---------+
+                   |
+                   | Send Message
+                   v
+         +-------------------+
+         | SQS Queue         |
+         +---------+---------+
+                   |
+                   | Trigger
+                   v
+         +-------------------+
+         | EKS Pod           |
+         |   [EKSRole]       |
+         +---------+---------+
+                   |
+                   | Upload Resized Image
+                   v
+         +-------------------+
+         | S3 Bucket (Processed) |
+         +-------------------+
+```
 ---
 
 ## 📂 Project Structure
-```bash
-project/
-│
-├── main.tf # Main Terraform configuration (backend, modules, error alerts)
-├── variables.tf # Input variable definitions
-├── terraform.tfvars # Variable values
-├── outputs.tf # Project outputs
-├── backend.tf # Creates S3 bucket & DynamoDB for remote state
-│
-├── modules/
-│ ├── handler_function/ # Node.js source code & dependencies
-│ ├── lambda_function/ # Lambda deployment configuration
-│ ├── s3_setup/ # S3 application buckets configuration
-│ └── sns_topic/ # SNS topics configuration
-│
-└── eks-app/
-├── Dockerfile # Container build instructions
-├── eks-app.js # Application code (SQS processing & thumbnail upload)
-└── deployment.yaml # Kubernetes deployment manifest
-    
+```bash 
+  project/
+  │
+  ├── main.tf # Main Terraform configuration (backend, modules, error alerts)
+  ├── variables.tf # Input variable definitions
+  ├── terraform.tfvars # Variable values
+  ├── outputs.tf # Project outputs
+  ├── backend.tf # Creates S3 bucket & DynamoDB for remote state
+  │
+  ├── modules/
+  │ ├── handler_function/ # Node.js source code & dependencies
+  │ ├── lambda_function/ # Lambda deployment configuration
+  │ ├── s3_setup/ # S3 application buckets configuration
+  │ └── sns_topic/ # SNS topics configuration
+  │
+  └── eks-app/
+  ├── Dockerfile # Container build instructions
+  ├── eks-app.js # Application code (SQS processing & thumbnail upload)
+  └── deployment.yaml # Kubernetes deployment manifest
 ```
 ---
 
