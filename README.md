@@ -30,9 +30,9 @@ This project provisions AWS infrastructure using **Terraform** with a modular se
 ## Architecture Flow
 
 IAM Roles: 
- [LambdaExecRole]  - Lambda access to S3 & SNS & CloudWatch 
- [EKSRole]         - EKS pods access SQS & S3
- [SNSRole]         - SNS access to send messages
+-  [LambdaExecRole]  - Lambda access to S3 & SNS & CloudWatch 
+-  [EKSRole]         - EKS pods access SQS & S3
+-  [SNSRole]         - SNS access to send messages
  ```bash
 
          +-------------------+
