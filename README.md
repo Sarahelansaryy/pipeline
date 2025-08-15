@@ -1,11 +1,42 @@
-# Terraform AWS Lambda + S3 + SNS Setup
+# Terraform AWS Lambda + S3 + SNS + EKS + SQS Setup
 
-## 📌 Project Overview
-This project provisions AWS infrastructure using **Terraform** with a modular setup:
-- **Lambda Function** (Node.js handler)
-- **S3 Buckets** for application storage
-- **SNS Topics** for notifications
-- **Remote Backend** (S3 + DynamoDB) for Terraform state
+# 📌 Project Overview
+
+This project provisions AWS infrastructure using **Terraform** with a modular setup for an image processing pipeline.
+
+## Components
+
+- **Lambda Function**
+  - Node.js handler for processing events from S3 or other triggers.
+
+- **S3 Buckets**
+  - Store original and processed images.
+
+- **SNS Topics**
+  - Used for notifications and alerting.
+  - Publishes object keys to **SQS** for downstream processing.
+
+- **SQS Queues**
+  - Subscribed to SNS to receive object keys.
+  - Triggers **EKS pods** to process images.
+
+- **EKS Cluster**
+  - Pods subscribe to SQS and resize images before uploading them back to S3.
+
+- **Terraform Remote Backend**
+  - Uses **S3 + DynamoDB** to store Terraform state and support locking.
+
+
+## Architecture Flow
+
+```mermaid
+flowchart LR
+    A[S3 Bucket (Upload Image)] -->|Triggers| B[Lambda Function]
+    B -->|Publishes Object Key| C[SNS Topic]
+    C -->|Sends Message| D[SQS Queue]
+    D -->|Triggers| E[EKS Pod]
+    E -->|Uploads Resized Image| F[S3 Bucket (Processed Image)]
+
 
 ---
 
@@ -13,23 +44,23 @@ This project provisions AWS infrastructure using **Terraform** with a modular se
 ```bash
 project/
 │
-├── main.tf # Backend config & module calls & email error alert resoursce
+├── main.tf # Main Terraform configuration (backend, modules, error alerts)
 ├── variables.tf # Input variable definitions
 ├── terraform.tfvars # Variable values
 ├── outputs.tf # Project outputs
-│
-├── backend/ # Remote backend bootstrap
-│ ├── s3_backend.tf # Creates S3 bucket & DynamoDB table for state
-│ └── outputs.tf
+├── backend.tf # Creates S3 bucket & DynamoDB for remote state
 │
 ├── modules/
 │ ├── handler_function/ # Node.js source code & dependencies
-│ ├── lambda_function/ # Terraform for Lambda deployment
-│ ├── s3_setup/ # Terraform for S3 application buckets
-│ └── sns_topic/ # Terraform for SNS topics
-
-  
-
+│ ├── lambda_function/ # Lambda deployment configuration
+│ ├── s3_setup/ # S3 application buckets configuration
+│ └── sns_topic/ # SNS topics configuration
+│
+└── eks-app/
+├── Dockerfile # Container build instructions
+├── eks-app.js # Application code (SQS processing & thumbnail upload)
+└── deployment.yaml # Kubernetes deployment manifest
+    
 ```
 ---
 
@@ -90,9 +121,60 @@ Lambda Packaging: Ensure the aws-sdk module is not bundled in Lambda if using th
 
 
 Order of Deployment: Backend → Main project modules.
+# Building & Deploying the EKS App
+
+## 1. Install Node.js Modules
+Initialize a new Node.js project:
+```bash
+npm init -y
+```
+## 2. Install AWS SDK and Sharp
+
+Install required dependencies for AWS services integration and image processing:
+``` bash
+npm install aws-sdk sharp
+```
+### Deploying the Docker Image to Amazon ECR
+1. Create an ECR Repository
+```bash
+aws ecr create-repository --repository-name sarah-image-processor
+```
+2. Authenticate Docker with ECR
+```bash
+aws ecr get-login-password --region eu-central-1 \
+| docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com
+```
+
+3. Build the Docker Image
+
+Make sure Docker Engine is running before building.
+```bash
+
+docker build -t image-processor .
+```
+
+4. Tag the Docker Image
+```bash 
+docker tag image-processor:latest <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/sarah-image-processor:latest
+```
+
+5. Push the Image to ECR
+``` bash
+docker push <ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/sarah-image-processor:latest
+```
+
+6. Verify the Image in ECR
+
+List available images to confirm the upload:
+```bash
+
+aws ecr list-images --repository-name sarah-image-processor --region eu-central-1
+```
+7. Reference the Image in Kubernetes Deployment
+
+Update your Kubernetes deployment.yaml file with the ECR image URI.
 ### 🧹 Destroying Infrastructure
 To remove all resources:
 ```bash
 terraform destroy
 ```
-
