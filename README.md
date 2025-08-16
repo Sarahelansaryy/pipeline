@@ -149,6 +149,14 @@ Create S3 buckets for application data
 
 Create SNS topics for notifications
 
+Set the Email Endpoint For notifications
+
+Create SQS
+
+
+
+
+
 ### 🛠 Notes
 Lambda Packaging: Ensure the aws-sdk module is not bundled in Lambda if using the AWS-managed runtime (already included).
 
@@ -206,8 +214,54 @@ aws ecr list-images --repository-name sarah-image-processor --region eu-central-
 7. Reference the Image in Kubernetes Deployment
 
 Update your Kubernetes deployment.yaml file with the ECR image URI.
-### 🧹 Destroying Infrastructure
+### 🧹 CleanUp Guide
 To remove all resources:
+
 ```bash
 terraform destroy
 ```
+### Using AWS ClI For Stuck Resources
+
+-**1️⃣ S3 Buckets**
+```bash
+  aws s3 ls 
+  aws s3 rm s3://$bucket --recursive
+  aws s3api delete-bucket --bucket $bucket
+```
+
+
+
+-**2️⃣ Lambda Functions**
+```bash
+aws lambda list-functions --query "Functions[].FunctionName" --output text
+aws lambda delete-function --function-name $func
+```
+
+-**3️⃣ EKS Clusters**
+ ``` bash
+aws eks list-clusters --query "clusters[]" --output text
+aws eks list-nodegroups --cluster-name $cluster --query "nodegroups[]" --output text  
+aws eks delete-nodegroup --cluster-name $cluster --nodegroup-name $ng
+aws eks delete-cluster --name $cluster
+```
+
+
+-**4️⃣ IAM Roles and Policies**
+``` bash
+aws iam list-roles --query "Roles[?contains(RoleName, 'eks') || contains(RoleName, 'lambda')].RoleName" --output text
+aws iam list-attached-role-policies --role-name $role --query "AttachedPolicies[].PolicyArn" --output text
+aws iam detach-role-policy --role-name $role --policy-arn $policy
+aws iam delete-role --role-name $role
+```
+
+
+-**5️⃣ CloudWatch Logs / SNS / SQS**
+```bash
+aws logs describe-log-groups --query "logGroups[].logGroupName" --output text
+aws logs delete-log-group --log-group-name $log
+aws sns list-topics --query "Topics[].TopicArn" --output text
+aws sns delete-topic --topic-arn $topic
+aws sqs list-queues --query "QueueUrls[]" --output text
+aws sqs delete-queue --queue-url $queue
+```
+
